@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.20)
 project(Brief C)
 
-set(CMAKE_C_STANDARD 90)
+set(CMAKE_C_STANDARD 99)
 
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
     add_definitions(-DBRIEF_DEBUG)

@@ -15,4 +15,4 @@ i32 kdtree_nearest_n(KDTreeHandle* tree, Vector3 position, KDTreePointId* out_ne
 i32 kdtree_nearest_radius(KDTreeHandle* tree, Vector3 position, f32 radius, KDTreePointId* out_neighbours, f32* out_neighbours_distances, i32 out_neighbours_max);
 i32 kdtree_nearest_aabb(KDTreeHandle* tree, Vector3 position, Vector2 aabb, KDTreePointId* out_neighbours, f32* out_neighbours_distances, i32 out_neighbours_max);
 
-#endif //BRIEF_BRIEF_KDTREE_H
+#endif//BRIEF_BRIEF_KDTREE_H
