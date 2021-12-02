@@ -48,6 +48,11 @@ typedef u8 bool;
 #define ASSERT(Expression)
 #endif
 
+#define VECTOR_AXIS_X 0
+#define VECTOR_AXIS_Y 1
+#define VECTOR_AXIS_Z 2
+#define VECTOR_AXIS_W 3
+
 typedef struct Vector2 Vector2;
 struct Vector2 {
 	union {
@@ -83,5 +88,8 @@ struct Vector4 {
 		f32 data[4];
 	};
 };
+
+#define MIN(A, B) ((A < B) ? (A) : (B))
+#define MAX(A, B) ((A > B) ? (A) : (B))
 
 #endif//BRIEF_BRIEF_TYPES_H

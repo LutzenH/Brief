@@ -1,7 +1,7 @@
 #include "brief_platform.h"
 
-#include <WinUser.h>
-#include <Windows.h>
+#include <windows.h>
+#include <winuser.h>
 #include <stdio.h>
 
 u8* platform_file_load_in_memory(const char* path, size_t* file_size, bool add_trailing_zero) {
