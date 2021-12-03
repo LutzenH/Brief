@@ -2,6 +2,7 @@
 
 #include <math.h>
 #include <stdlib.h>
+#include <string.h>
 
 typedef struct KDTreeNode KDTreeNode;
 struct KDTreeNode {
@@ -35,15 +36,8 @@ Vector3 kdtree_vector3_pow(const Vector3* vector, const Vector3* power) {
 	return value;
 }
 
-f32 kdtree_compare_vector3_axis(const Vector3* position_a, const Vector3* position_b, i32 axis) {
-	f32 a = position_a->data[axis];
-	f32 b = position_b->data[axis];
-
-	return a - b;
-}
-
 i32 kdtree_sort_node_axis(const KDTreeNode* node_a, const KDTreeNode* node_b, i32 axis) {
-	f32 value = kdtree_compare_vector3_axis(&node_a->position, &node_b->position, axis);
+	f32 value = node_a->position.data[axis] - node_b->position.data[axis];
 	return (value < 0.0f) ? -1 : ((value > 0.0f) ? 1 : 0);
 }
 
@@ -106,7 +100,8 @@ void kdtree_nearest_search(KDTreeNode* root_node, Vector3 position, i32 depth, K
 		return;
 	}
 
-	f32 comparison = kdtree_compare_vector3_axis(&position, &root_node->position, (depth % 3));
+	i32 axis = (depth % 3);
+	f32 comparison = position.data[axis] - root_node->position.data[axis];
 
 	KDTreeNode* near = NULL;
 	KDTreeNode* far = NULL;
@@ -144,14 +139,82 @@ KDTreePointId kdtree_nearest(KDTreeHandle* tree, Vector3 position, f32* distance
 	return id;
 }
 
+void kdtree_nearest_n_search(KDTreeNode* root_node, Vector3 position, i32 depth, KDTreePointId* out_neighbours, f32* out_neighbours_distances, i32* n_count, i32 n_max, f32* shortest_distance) {
+	if (root_node == NULL) {
+		return;
+	}
+
+	i32 axis = (depth % 3);
+	f32 comparison = position.data[axis] - root_node->position.data[axis];
+
+	KDTreeNode* near = NULL;
+	KDTreeNode* far = NULL;
+	if (comparison <= 0.0f) {
+		near = root_node->left;
+		far = root_node->right;
+	} else {
+		near = root_node->right;
+		far = root_node->left;
+	}
+
+	kdtree_nearest_n_search(near, position, depth + 1, out_neighbours, out_neighbours_distances, n_count, n_max, shortest_distance);
+	if ((comparison * comparison) < out_neighbours_distances[0]) {
+		kdtree_nearest_n_search(far, position, depth + 1, out_neighbours, out_neighbours_distances, n_count, n_max, shortest_distance);
+	}
+
+	Vector3 difference = kdtree_vector3_subtract(&position, &root_node->position);
+	Vector3 power = {2.0f, 2.0f, 2.0f};
+	Vector3 difference_squared = kdtree_vector3_pow(&difference, &power);
+	f32 distance_squared = difference_squared.x + difference_squared.y + difference_squared.z;
+
+	if (distance_squared < *shortest_distance) {
+		i32 start_idx = 0;
+		i32 end_idx = *n_count;
+
+		while (start_idx < end_idx) {
+			i32 center_idx = (start_idx + end_idx) / 2;
+
+			if (out_neighbours_distances[center_idx] < distance_squared) {
+				start_idx = center_idx + 1;
+			} else {
+				end_idx = center_idx;
+			}
+		}
+
+		memmove(out_neighbours + start_idx + 1, out_neighbours + start_idx, (*n_count - start_idx) * sizeof(KDTreePointId));
+		memmove(out_neighbours_distances + start_idx + 1, out_neighbours_distances + start_idx, (*n_count - start_idx) * sizeof(f32));
+		out_neighbours[start_idx] = root_node->identifier;
+		out_neighbours_distances[start_idx] = distance_squared;
+
+		if (*n_count < n_max) {
+			*n_count += 1;
+		} else {
+			*shortest_distance = out_neighbours_distances[n_max - 1];
+		}
+	}
+}
+
 i32 kdtree_nearest_n(KDTreeHandle* tree, Vector3 position, KDTreePointId* out_neighbours, f32* out_neighbours_distances, i32 out_neighbours_max) {
-	return 0;
+	for (i32 i = 0; i < out_neighbours_max; ++i) {
+		out_neighbours[i] = KDTreePointId_INVALID;
+		out_neighbours_distances[i] = INFINITY;
+	}
+
+	i32 n_count = 0;
+	f32 shortest_distance = INFINITY;
+	kdtree_nearest_n_search(tree->root, position, 0, out_neighbours, out_neighbours_distances, &n_count, out_neighbours_max, &shortest_distance);
+
+	for (i32 i = 0; i < n_count; ++i) {
+		out_neighbours_distances[i] = sqrtf(out_neighbours_distances[i]);
+	}
+
+	return n_count;
 }
 
 i32 kdtree_nearest_radius(KDTreeHandle* tree, Vector3 position, f32 radius, KDTreePointId* out_neighbours, f32* out_neighbours_distances, i32 out_neighbours_max) {
 	return 0;
 }
 
-i32 kdtree_nearest_aabb(KDTreeHandle* tree, Vector3 position, Vector2 aabb, KDTreePointId* out_neighbours, f32* out_neighbours_distances, i32 out_neighbours_max) {
+i32 kdtree_nearest_aabb(KDTreeHandle* tree, Vector3 aabb_min, Vector3 aabb_max, KDTreePointId* out_neighbours, f32* out_neighbours_distances, i32 out_neighbours_max) {
 	return 0;
 }
