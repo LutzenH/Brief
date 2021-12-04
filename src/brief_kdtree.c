@@ -158,7 +158,7 @@ void kdtree_nearest_n_search(KDTreeNode* root_node, Vector3 position, i32 depth,
 	}
 
 	kdtree_nearest_n_search(near, position, depth + 1, out_neighbours, out_neighbours_distances, n_count, n_max, shortest_distance);
-	if ((comparison * comparison) < out_neighbours_distances[0]) {
+	if ((comparison * comparison) < *shortest_distance) {
 		kdtree_nearest_n_search(far, position, depth + 1, out_neighbours, out_neighbours_distances, n_count, n_max, shortest_distance);
 	}
 
@@ -181,8 +181,8 @@ void kdtree_nearest_n_search(KDTreeNode* root_node, Vector3 position, i32 depth,
 			}
 		}
 
-		memmove(out_neighbours + start_idx + 1, out_neighbours + start_idx, (*n_count - start_idx) * sizeof(KDTreePointId));
-		memmove(out_neighbours_distances + start_idx + 1, out_neighbours_distances + start_idx, (*n_count - start_idx) * sizeof(f32));
+		memmove(out_neighbours + start_idx + 1, out_neighbours + start_idx, MAX(0, (*n_count - start_idx - 1)) * sizeof(KDTreePointId));
+		memmove(out_neighbours_distances + start_idx + 1, out_neighbours_distances + start_idx, MAX(0, (*n_count - start_idx - 1)) * sizeof(f32));
 		out_neighbours[start_idx] = root_node->identifier;
 		out_neighbours_distances[start_idx] = distance_squared;
 
