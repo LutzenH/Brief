@@ -6,7 +6,7 @@
 #include <stdlib.h>
 
 int main() {
-	// Setup
+	// Setup.
 	const i32 point_count = 131072;
 	Vector3* random_data = calloc(point_count, sizeof(Vector3));
 	KDTreePointId* random_data_identifiers = calloc(point_count, sizeof(i32));
@@ -19,21 +19,27 @@ int main() {
 		random_data_identifiers[i] = i;
 	}
 
-	// Allocate and create tree
+	// Allocate and create tree.
 	KDTreeHandle* tree = kdtree_create(random_data, random_data_identifiers, point_count);
 
-	// No longer needed beyond this point
+	// No longer needed beyond this point.
 	free(random_data);
 	free(random_data_identifiers);
 
-	// Nearest neighbour
+	// Serialize, de-allocate and re-allocate tree.
+	const char* file_path = "random_data.tree";
+	bool success = kdtree_serialize(tree, file_path);
+	kdtree_destroy(tree);
+	tree = kdtree_deserialize(file_path);
+
+	// Nearest neighbour.
 	{
 		const Vector3 position = {0.0f, 0.0f, 0.0f};
 		f32 distance = 0.0f;
 		KDTreePointId nearest_point_id = kdtree_nearest(tree, position, &distance);
 	}
 
-	// Nearest n neighbours
+	// Nearest n neighbours.
 	{
 		const Vector3 position = {0.0f, 0.0f, 0.0f};
 
@@ -42,7 +48,7 @@ int main() {
 		i32 nearest_point_count = kdtree_nearest_n(tree, position, neighbours, neighbours_distances, 32);
 	}
 
-	// Nearest radius neighbours
+	// Nearest radius neighbours.
 	{
 		const Vector3 position = {0.0f, 0.0f, 0.0f};
 		const f32 radius = 128.0f;
@@ -52,7 +58,7 @@ int main() {
 		i32 nearest_point_count = kdtree_nearest_radius(tree, position, radius, neighbours, neighbours_distances, 32);
 	}
 
-	// Within AABB detection
+	// Within AABB detection.
 	{
 		const Vector3 min = {-64.0f, -64.0f, -64.0f};
 		const Vector3 max = {64.0f, 64.0f, 64.0f};
@@ -62,7 +68,7 @@ int main() {
 		i32 nearest_point_count = kdtree_nearest_aabb(tree, min, max, neighbours, neighbours_distances, 32);
 	}
 
-	// Deallocate tree
+	// Deallocate tree.
 	kdtree_destroy(tree);
 
 	return 0;

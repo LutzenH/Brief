@@ -1,4 +1,5 @@
 #include "brief_kdtree.h"
+#include "brief_platform.h"
 
 #include <math.h>
 #include <stdlib.h>
@@ -93,6 +94,69 @@ KDTreeHandle* kdtree_create(const Vector3* points, const KDTreePointId* identifi
 bool kdtree_destroy(KDTreeHandle* tree) {
 	free(tree);
 	return true;
+}
+
+bool kdtree_serialize(KDTreeHandle* tree, const char* path) {
+	size_t tree_buffer_size = sizeof(KDTreeHandle) + sizeof(KDTreeNode) * tree->length;
+	KDTreeHandle* tree_copy = calloc(1, tree_buffer_size);
+	memcpy(tree_copy, tree, tree_buffer_size);
+
+	intptr_t tree_base_address = (intptr_t) tree;
+	if (tree->root != NULL) {
+		tree_copy->root = (KDTreeNode*) (((intptr_t) tree->root) - tree_base_address);
+	}
+
+	if (tree->nodes != NULL) {
+		tree_copy->nodes = (KDTreeNode*) (((u8*) tree_copy) + sizeof(KDTreeHandle));
+
+		for (i32 i = 0; i < tree->length; ++i) {
+			KDTreeNode* node = &tree_copy->nodes[i];
+
+			if (node->left != NULL) {
+				node->left = (KDTreeNode*) (((intptr_t) node->left) - tree_base_address);
+			}
+
+			if (node->right != NULL) {
+				node->right = (KDTreeNode*) (((intptr_t) node->right) - tree_base_address);
+			}
+		}
+
+		tree_copy->nodes = (KDTreeNode*) (((intptr_t) tree->nodes) - tree_base_address);
+	}
+
+	return platform_file_write_to_disk(path, (u8*) tree_copy, tree_buffer_size);
+}
+
+KDTreeHandle* kdtree_deserialize(const char* path) {
+	size_t file_size = 0;
+	KDTreeHandle* tree = (KDTreeHandle*) platform_file_load_in_memory(path, &file_size, false);
+	if (tree == NULL) {
+		return NULL;
+	}
+	ASSERT(file_size == (sizeof(KDTreeHandle) + sizeof(KDTreeNode) * tree->length));
+
+	intptr_t tree_base_address = (intptr_t) tree;
+	if (tree->root != NULL) {
+		tree->root = (KDTreeNode*) (((intptr_t) tree->root) + tree_base_address);
+	}
+
+	if (tree->nodes != NULL) {
+		tree->nodes = (KDTreeNode*) (((intptr_t) tree->nodes) + tree_base_address);
+
+		for (i32 i = 0; i < tree->length; ++i) {
+			KDTreeNode* node = &tree->nodes[i];
+
+			if (node->left != NULL) {
+				node->left = (KDTreeNode*) (((intptr_t) node->left) + tree_base_address);
+			}
+
+			if (node->right != NULL) {
+				node->right = (KDTreeNode*) (((intptr_t) node->right) + tree_base_address);
+			}
+		}
+	}
+
+	return tree;
 }
 
 void kdtree_nearest_search(KDTreeNode* root_node, Vector3 position, i32 depth, KDTreePointId* out_point_id, f32* out_distance) {
