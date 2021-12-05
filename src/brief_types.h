@@ -89,7 +89,8 @@ struct Vector4 {
 	};
 };
 
-#define MIN(A, B) ((A < B) ? (A) : (B))
-#define MAX(A, B) ((A > B) ? (A) : (B))
+#define MIN(A, B) (((A) < (B)) ? (A) : (B))
+#define MAX(A, B) (((A) > (B)) ? (A) : (B))
+#define CLAMP(X, A, B) MAX((A), MIN((X), (B)))
 
 #endif//BRIEF_BRIEF_TYPES_H
