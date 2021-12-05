@@ -9,13 +9,13 @@ else ()
     add_definitions(-DBRIEF_RELEASE)
 endif ()
 
-IF(WIN32)
+IF (WIN32)
     add_definitions(-DBRIEF_WINDOWS)
-ELSEIF(APPLE)
+ELSEIF (APPLE)
     add_definitions(-DBRIEF_MACOS)
-ELSEIF(UNIX)
+ELSEIF (UNIX)
     add_definitions(-DBRIEF_LINUX)
-ENDIF()
+ENDIF ()
 
 set(BRIEF_FILES
         src/brief_types.h
@@ -23,6 +23,7 @@ set(BRIEF_FILES
         src/brief_platform.h
         src/brief_kdtree.c
         src/brief_kdtree.h
-)
+        src/brief_visualization.c
+        src/brief_visualization.h)
 
 add_executable(Brief src/brief.c ${BRIEF_FILES})
